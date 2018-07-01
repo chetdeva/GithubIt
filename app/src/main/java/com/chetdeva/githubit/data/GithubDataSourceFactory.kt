@@ -12,12 +12,12 @@ import java.util.concurrent.Executor
  * in the Repository class.
  */
 class GithubDataSourceFactory(
-        private val redditApi: GithubApi,
-        private val subredditName: String,
+        private val githubApi: GithubApi,
+        private val searchQuery: String,
         private val retryExecutor: Executor) : DataSource.Factory<String, Item>() {
-    val sourceLiveData = MutableLiveData<PageKeyedSubredditDataSource>()
+    val sourceLiveData = MutableLiveData<PageKeyedGithubDataSource>()
     override fun create(): DataSource<String, Item> {
-        val source = PageKeyedSubredditDataSource(redditApi, subredditName, retryExecutor)
+        val source = PageKeyedGithubDataSource(githubApi, searchQuery, retryExecutor)
         sourceLiveData.postValue(source)
         return source
     }

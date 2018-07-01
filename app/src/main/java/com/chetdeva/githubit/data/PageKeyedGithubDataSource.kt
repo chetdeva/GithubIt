@@ -14,9 +14,9 @@ import java.util.concurrent.Executor
  * <p>
  * See ItemKeyedSubredditDataSource
  */
-class PageKeyedSubredditDataSource(
-        private val redditApi: GithubApi,
-        private val subredditName: String,
+class PageKeyedGithubDataSource(
+        private val githubApi: GithubApi,
+        private val searchQuery: String,
         private val retryExecutor: Executor) : PageKeyedDataSource<String, Item>() {
 
     private val firstPage = 1
@@ -49,7 +49,7 @@ class PageKeyedSubredditDataSource(
 
     override fun loadAfter(params: LoadParams<String>, callback: LoadCallback<String, Item>) {
         networkState.postValue(NetworkState.LOADING)
-        redditApi.searchUsers(query = subredditName,
+        githubApi.searchUsers(query = searchQuery,
                 page = params.key,
                 itemsPerPage = params.requestedLoadSize).enqueue(
                 object : retrofit2.Callback<UsersSearchResponse> {
@@ -83,8 +83,9 @@ class PageKeyedSubredditDataSource(
     override fun loadInitial(
             params: LoadInitialParams<String>,
             callback: LoadInitialCallback<String, Item>) {
+
         networkState.postValue(NetworkState.LOADING)
-        redditApi.searchUsers(query = subredditName,
+        githubApi.searchUsers(query = searchQuery,
                 page = firstPage.toString(),
                 itemsPerPage = params.requestedLoadSize).enqueue(
                 object : retrofit2.Callback<UsersSearchResponse> {
