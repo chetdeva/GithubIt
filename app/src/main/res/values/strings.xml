@@ -13,4 +13,5 @@
     <string name="db_plus_network">db + network</string>
     <string name="network_only_by_item">network only (by item)</string>
     <string name="network_only_by_page">network only (by page)</string>
+    <string name="search">Search...</string>
 </resources>

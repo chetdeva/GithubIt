@@ -14,7 +14,7 @@ class SearchUsersViewModel(
     private val repoResult = map(searchQuery) {
         repository.searchUsers(it, PAGE_SIZE)
     }
-    val posts = switchMap(repoResult) { it.pagedList }!!
+    val items = switchMap(repoResult) { it.pagedList }!!
     val networkState = switchMap(repoResult) { it.networkState }!!
     val refreshState = switchMap(repoResult) { it.refreshState }!!
 
@@ -38,6 +38,6 @@ class SearchUsersViewModel(
     fun currentSearchQuery(): String? = searchQuery.value
 
     companion object {
-        const val PAGE_SIZE: Int = 3
+        const val PAGE_SIZE: Int = 5
     }
 }

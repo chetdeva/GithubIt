@@ -2,7 +2,6 @@ package com.chetdeva.githubit.data
 
 import android.arch.lifecycle.MutableLiveData
 import android.arch.paging.DataSource
-import com.chetdeva.githubit.api.GithubApi
 import com.chetdeva.githubit.api.GithubApiService
 import com.chetdeva.githubit.api.Item
 import java.util.concurrent.Executor
@@ -13,15 +12,15 @@ import java.util.concurrent.Executor
  * in the Repository class.
  */
 class GithubDataSourceFactory(
-        private val githubApi: GithubApiService,
         private val searchQuery: String,
+        private val githubApi: GithubApiService,
         private val retryExecutor: Executor
 ) : DataSource.Factory<Int, Item>() {
 
-    val source = MutableLiveData<PageKeyedGithubDataSource>()
+    val source = MutableLiveData<GithubPageKeyedDataSource>()
 
     override fun create(): DataSource<Int, Item> {
-        val source = PageKeyedGithubDataSource(githubApi, searchQuery, retryExecutor)
+        val source = GithubPageKeyedDataSource(searchQuery, githubApi, retryExecutor)
         this.source.postValue(source)
         return source
     }

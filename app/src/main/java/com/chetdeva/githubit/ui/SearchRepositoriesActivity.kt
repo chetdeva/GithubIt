@@ -6,15 +6,16 @@ import android.arch.paging.PagedList
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.RecyclerView
-import android.view.KeyEvent
-import android.view.inputmethod.EditorInfo
-import android.widget.EditText
+import android.support.v7.widget.SearchView
+import android.view.Menu
+import android.view.MenuItem
 import com.chetdeva.githubit.Injection
 import com.chetdeva.githubit.R
 import com.chetdeva.githubit.api.Item
 import com.chetdeva.githubit.data.NetworkState
 import com.chetdeva.githubit.util.GlideApp
 import kotlinx.android.synthetic.main.activity_search_repositories.*
+
 
 class SearchRepositoriesActivity : AppCompatActivity() {
 
@@ -23,7 +24,6 @@ class SearchRepositoriesActivity : AppCompatActivity() {
         const val DEFAULT_USER = "google"
     }
 
-    private lateinit var input: EditText
     private lateinit var list: RecyclerView
     private lateinit var model: SearchUsersViewModel
     private val glideRequests by lazy { GlideApp.with(this) }
@@ -31,18 +31,16 @@ class SearchRepositoriesActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_search_repositories)
-        input = findViewById(R.id.input)
         list = findViewById(R.id.list)
 
-        model = getViewModel()
+        model = viewModel()
         initAdapter()
         initSwipeToRefresh()
-        initSearch()
         val searchQuery = savedInstanceState?.getString(KEY_GITHUB_USER) ?: DEFAULT_USER
         model.showSearchResults(searchQuery)
     }
 
-    private fun getViewModel(): SearchUsersViewModel {
+    private fun viewModel(): SearchUsersViewModel {
         val viewModelFactory = Injection.provideViewModelFactory()
         return ViewModelProviders.of(this, viewModelFactory)[SearchUsersViewModel::class.java]
     }
@@ -52,7 +50,7 @@ class SearchRepositoriesActivity : AppCompatActivity() {
             model.retry()
         }
         list.adapter = adapter
-        model.posts.observe(this, Observer<PagedList<Item>> {
+        model.items.observe(this, Observer<PagedList<Item>> {
             adapter.submitList(it)
         })
         model.networkState.observe(this, Observer {
@@ -74,33 +72,55 @@ class SearchRepositoriesActivity : AppCompatActivity() {
         outState.putString(KEY_GITHUB_USER, model.currentSearchQuery())
     }
 
-    private fun initSearch() {
-        input.setOnEditorActionListener { _, actionId, _ ->
-            if (actionId == EditorInfo.IME_ACTION_GO) {
-                updatedFromInput()
-                true
-            } else {
-                false
-            }
+    /**
+     * Search configuration
+     */
+    private var searchView: SearchView? = null
+
+    private var onQueryTextListener: SearchView.OnQueryTextListener? = object : SearchView.OnQueryTextListener {
+        override fun onQueryTextSubmit(query: String): Boolean {
+            searchGithub(query)
+            return true
         }
-        input.setOnKeyListener { _, keyCode, event ->
-            if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
-                updatedFromInput()
-                true
-            } else {
-                false
-            }
+
+        override fun onQueryTextChange(newText: String): Boolean {
+            // do nothing
+            return true
         }
     }
 
-    private fun updatedFromInput() {
-        input.text.trim().toString().let {
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_search, menu)
+        searchView = searchView(menu)
+        searchView?.queryHint = getString(R.string.search)
+        searchView?.setOnQueryTextListener(onQueryTextListener)
+        return true
+    }
+
+    private fun searchView(menu: Menu?): SearchView? {
+        val searchItem = menu?.findItem(R.id.action_search)
+        return searchItem?.actionView as? SearchView
+    }
+    private fun hideKeyboard() {
+        if (searchView?.hasFocus() == true) searchView?.clearFocus()
+    }
+
+    private fun searchGithub(searchQuery: String) {
+        searchQuery.trim().let {
             if (it.isNotEmpty()) {
                 if (model.showSearchResults(it)) {
                     list.scrollToPosition(0)
                     (list.adapter as? UsersAdapter)?.submitList(null)
+                    hideKeyboard()
                 }
             }
+        }
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
+        return when (item?.itemId) {
+            R.id.action_search -> true
+            else -> super.onOptionsItemSelected(item)
         }
     }
 }

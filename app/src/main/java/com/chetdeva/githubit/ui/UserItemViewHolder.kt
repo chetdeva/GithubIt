@@ -39,7 +39,7 @@ class UserItemViewHolder(view: View,
             thumbnail.visibility = View.VISIBLE
             glide.load(item.avatarUrl)
                     .centerCrop()
-                    .placeholder(R.drawable.ic_insert_photo_black_48dp)
+                    .placeholder(R.drawable.ic_placeholder)
                     .into(thumbnail)
         } else {
             thumbnail.visibility = View.GONE

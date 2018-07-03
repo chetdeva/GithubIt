@@ -4,19 +4,14 @@ import android.arch.lifecycle.MutableLiveData
 import android.arch.paging.PageKeyedDataSource
 import com.chetdeva.githubit.api.GithubApiService
 import com.chetdeva.githubit.api.Item
-import com.chetdeva.githubit.api.UsersSearchResponse
-import retrofit2.Call
-import retrofit2.Response
-import retrofit2.Callback
-import java.io.IOException
 import java.util.concurrent.Executor
 
 /**
  *
  */
-class PageKeyedGithubDataSource(
-        private val apiService: GithubApiService,
+class GithubPageKeyedDataSource(
         private val searchQuery: String,
+        private val apiService: GithubApiService,
         private val retryExecutor: Executor
 ) : PageKeyedDataSource<Int, Item>() {
 
@@ -36,7 +31,7 @@ class PageKeyedGithubDataSource(
                              callback: LoadInitialCallback<Int, Item>) {
 
         val currentPage = 1
-        val nextPage = computeNextPage(currentPage)
+        val nextPage = currentPage + 1
 
         makeLoadInitialRequest(params, callback, currentPage, nextPage)
     }
@@ -47,12 +42,13 @@ class PageKeyedGithubDataSource(
                                        nextPage: Int) {
 
         // triggered by a refresh, we better execute sync
-        postInitialState(NetworkState.LOADING)
-
         apiService.searchUsersSync(
                 query = searchQuery,
                 page = currentPage,
                 perPage = params.requestedLoadSize,
+                onPrepared = {
+                    postInitialState(NetworkState.LOADING)
+                },
                 onSuccess = { responseBody ->
                     val items = responseBody?.items ?: emptyList()
                     retry = null
@@ -72,7 +68,7 @@ class PageKeyedGithubDataSource(
                            callback: LoadCallback<Int, Item>) {
 
         val currentPage = params.key
-        val nextPage = computeNextPage(currentPage)
+        val nextPage = currentPage + 1
 
         makeLoadAfterRequest(params, callback, currentPage, nextPage)
     }
@@ -82,12 +78,13 @@ class PageKeyedGithubDataSource(
                                      currentPage: Int,
                                      nextPage: Int) {
 
-        postAfterState(NetworkState.LOADING)
-
         apiService.searchUsersAsync(
                 query = searchQuery,
                 page = currentPage,
                 perPage = params.requestedLoadSize,
+                onPrepared = {
+                    postAfterState(NetworkState.LOADING)
+                },
                 onSuccess = { responseBody ->
                     val items = responseBody?.items ?: emptyList()
                     retry = null
@@ -115,9 +112,5 @@ class PageKeyedGithubDataSource(
 
     private fun postAfterState(state: NetworkState) {
         network.postValue(state)
-    }
-
-    private fun computeNextPage(page: Int): Int {
-        return page + 1
     }
 }

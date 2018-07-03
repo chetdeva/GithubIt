@@ -8,16 +8,6 @@
     android:orientation="vertical"
     tools:context=".ui.SearchRepositoriesActivity">
 
-    <EditText
-        android:id="@+id/input"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="@string/search_hint"
-        android:imeOptions="actionSearch"
-        android:inputType="textNoSuggestions"
-        android:text="@string/default_query"
-        tools:text="androiddev" />
-
     <android.support.v4.widget.SwipeRefreshLayout
         android:id="@+id/swipe_refresh"
         android:layout_width="match_parent"
