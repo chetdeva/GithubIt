@@ -19,7 +19,7 @@ interface GithubApi {
     @GET("search/users?sort=followers")
     fun searchUsers(@Query("q") query: String,
                     @Query("page") page: Int,
-                    @Query("per_page") itemsPerPage: Int): Call<UsersSearchResponse>
+                    @Query("per_page") perPage: Int): Call<UsersSearchResponse>
 
 
     companion object {

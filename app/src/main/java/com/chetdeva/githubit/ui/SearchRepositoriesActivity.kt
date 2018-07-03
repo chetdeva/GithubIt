@@ -13,6 +13,7 @@ import com.chetdeva.githubit.Injection
 import com.chetdeva.githubit.R
 import com.chetdeva.githubit.api.Item
 import com.chetdeva.githubit.data.NetworkState
+import com.chetdeva.githubit.util.GlideApp
 import kotlinx.android.synthetic.main.activity_search_repositories.*
 
 class SearchRepositoriesActivity : AppCompatActivity() {
@@ -25,6 +26,7 @@ class SearchRepositoriesActivity : AppCompatActivity() {
     private lateinit var input: EditText
     private lateinit var list: RecyclerView
     private lateinit var model: SearchUsersViewModel
+    private val glideRequests by lazy { GlideApp.with(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,7 +48,7 @@ class SearchRepositoriesActivity : AppCompatActivity() {
     }
 
     private fun initAdapter() {
-        val adapter = UsersAdapter {
+        val adapter = UsersAdapter(glideRequests) {
             model.retry()
         }
         list.adapter = adapter

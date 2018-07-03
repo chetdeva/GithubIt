@@ -6,9 +6,6 @@ import android.arch.lifecycle.Transformations.switchMap
 import android.arch.lifecycle.ViewModel
 import com.chetdeva.githubit.data.GithubRepository
 
-/**
- * A RecyclerView ViewHolder that displays a single reddit post.
- */
 class SearchUsersViewModel(
         private val repository: GithubRepository
 ) : ViewModel() {

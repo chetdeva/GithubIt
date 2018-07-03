@@ -2,7 +2,7 @@ package com.chetdeva.githubit.data
 
 import android.arch.lifecycle.MutableLiveData
 import android.arch.paging.PageKeyedDataSource
-import com.chetdeva.githubit.api.GithubApi
+import com.chetdeva.githubit.api.GithubApiService
 import com.chetdeva.githubit.api.Item
 import com.chetdeva.githubit.api.UsersSearchResponse
 import retrofit2.Call
@@ -15,7 +15,7 @@ import java.util.concurrent.Executor
  *
  */
 class PageKeyedGithubDataSource(
-        private val githubApi: GithubApi,
+        private val apiService: GithubApiService,
         private val searchQuery: String,
         private val retryExecutor: Executor
 ) : PageKeyedDataSource<Int, Item>() {
@@ -38,29 +38,31 @@ class PageKeyedGithubDataSource(
         val currentPage = 1
         val nextPage = computeNextPage(currentPage)
 
-        val request = githubApi.searchUsers(searchQuery, currentPage, params.requestedLoadSize)
-
-        makeLoadInitialRequest(params, callback, request, nextPage)
+        makeLoadInitialRequest(params, callback, currentPage, nextPage)
     }
 
     private fun makeLoadInitialRequest(params: LoadInitialParams<Int>,
                                        callback: LoadInitialCallback<Int, Item>,
-                                       request: Call<UsersSearchResponse>,
+                                       currentPage: Int,
                                        nextPage: Int) {
 
+        // triggered by a refresh, we better execute sync
         postInitialState(NetworkState.LOADING)
 
-        // triggered by a refresh, we better execute sync
-        try {
-            val response = request.execute()
-            val items = response.body()?.items ?: emptyList()
-            retry = null
-            postInitialState(NetworkState.LOADED)
-            callback.onResult(items, null, nextPage)
-        } catch (exception: IOException) {
-            retry = { loadInitial(params, callback) }
-            postInitialState(NetworkState.error(exception.message ?: "unknown error"))
-        }
+        apiService.searchUsersSync(
+                query = searchQuery,
+                page = currentPage,
+                perPage = params.requestedLoadSize,
+                onSuccess = { responseBody ->
+                    val items = responseBody?.items ?: emptyList()
+                    retry = null
+                    postInitialState(NetworkState.LOADED)
+                    callback.onResult(items, null, nextPage)
+                },
+                onError = { errorMessage ->
+                    retry = { loadInitial(params, callback) }
+                    postInitialState(NetworkState.error(errorMessage))
+                })
     }
 
     /**
@@ -70,41 +72,32 @@ class PageKeyedGithubDataSource(
                            callback: LoadCallback<Int, Item>) {
 
         val currentPage = params.key
-        val nextPage = computeNextPage(params.key)
+        val nextPage = computeNextPage(currentPage)
 
-        val request = githubApi.searchUsers(searchQuery, currentPage, params.requestedLoadSize)
-
-        makeLoadAfterRequest(params, callback, request, nextPage)
+        makeLoadAfterRequest(params, callback, currentPage, nextPage)
     }
 
     private fun makeLoadAfterRequest(params: LoadParams<Int>,
                                      callback: LoadCallback<Int, Item>,
-                                     request: Call<UsersSearchResponse>,
+                                     currentPage: Int,
                                      nextPage: Int) {
 
         postAfterState(NetworkState.LOADING)
 
-        request.enqueue(object : Callback<UsersSearchResponse> {
-
-            override fun onFailure(call: Call<UsersSearchResponse>, t: Throwable) {
-                retry = { loadAfter(params, callback) }
-                postAfterState(NetworkState.error(t.message ?: "unknown err"))
-            }
-
-            override fun onResponse(
-                    call: Call<UsersSearchResponse>,
-                    response: Response<UsersSearchResponse>) {
-                if (response.isSuccessful) {
-                    val items = response.body()?.items!!
+        apiService.searchUsersAsync(
+                query = searchQuery,
+                page = currentPage,
+                perPage = params.requestedLoadSize,
+                onSuccess = { responseBody ->
+                    val items = responseBody?.items ?: emptyList()
                     retry = null
                     callback.onResult(items, nextPage)
                     postAfterState(NetworkState.LOADED)
-                } else {
+                },
+                onError = { errorMessage ->
                     retry = { loadAfter(params, callback) }
-                    postAfterState(NetworkState.error("error code: ${response.code()}"))
-                }
-            }
-        })
+                    postAfterState(NetworkState.error(errorMessage))
+                })
     }
 
     fun retryAllFailed() {

@@ -1,18 +1,19 @@
 package com.chetdeva.githubit.ui
 
 import android.arch.paging.PagedListAdapter
-import android.support.v7.recyclerview.extensions.ListAdapter
 import android.support.v7.util.DiffUtil
 import android.support.v7.widget.RecyclerView
 import android.view.ViewGroup
 import com.chetdeva.githubit.R
 import com.chetdeva.githubit.api.Item
 import com.chetdeva.githubit.data.NetworkState
+import com.chetdeva.githubit.util.GlideRequests
 
 /**
  * Adapter for the list of repositories.
  */
 class UsersAdapter(
+        private val glideRequests: GlideRequests,
         private val retryCallback: () -> Unit
 ) : PagedListAdapter<Item, RecyclerView.ViewHolder>(ITEM_COMPARATOR) {
 
@@ -20,15 +21,14 @@ class UsersAdapter(
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (getItemViewType(position)) {
-            R.layout.reddit_post_item -> (holder as RedditPostViewHolder).bind(getItem(position))
-            R.layout.network_state_item -> (holder as NetworkStateItemViewHolder).bindTo(
-                    networkState)
+            R.layout.user_item -> (holder as UserItemViewHolder).bind(getItem(position))
+            R.layout.network_state_item -> (holder as NetworkStateItemViewHolder).bind(networkState)
         }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when (viewType) {
-            R.layout.reddit_post_item -> RedditPostViewHolder.create(parent)
+            R.layout.user_item -> UserItemViewHolder.create(parent, glideRequests)
             R.layout.network_state_item -> NetworkStateItemViewHolder.create(parent, retryCallback)
             else -> throw IllegalArgumentException("unknown view type $viewType")
         }
@@ -40,7 +40,7 @@ class UsersAdapter(
         return if (hasExtraRow() && position == itemCount - 1) {
             R.layout.network_state_item
         } else {
-            R.layout.reddit_post_item
+            R.layout.user_item
         }
     }
 

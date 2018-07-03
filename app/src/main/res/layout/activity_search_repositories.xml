@@ -15,7 +15,7 @@
         android:hint="@string/search_hint"
         android:imeOptions="actionSearch"
         android:inputType="textNoSuggestions"
-        android:text="@string/default_subreddit"
+        android:text="@string/default_query"
         tools:text="androiddev" />
 
     <android.support.v4.widget.SwipeRefreshLayout

@@ -4,6 +4,7 @@ import android.arch.lifecycle.Transformations.switchMap
 import android.arch.paging.LivePagedListBuilder
 import android.support.annotation.MainThread
 import com.chetdeva.githubit.api.GithubApi
+import com.chetdeva.githubit.api.GithubApiService
 import com.chetdeva.githubit.api.Item
 import java.util.concurrent.Executor
 
@@ -12,7 +13,7 @@ import java.util.concurrent.Executor
  * the previous / next page keys returned in the query.
  */
 class InMemoryByPageKeyRepository(
-        private val githubApi: GithubApi,
+        private val githubApi: GithubApiService,
         private val networkExecutor: Executor
 ) : GithubRepository {
 

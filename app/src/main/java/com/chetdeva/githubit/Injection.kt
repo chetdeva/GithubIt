@@ -3,6 +3,7 @@ package com.chetdeva.githubit
 import android.arch.lifecycle.ViewModelProvider
 import android.content.Context
 import com.chetdeva.githubit.api.GithubApi
+import com.chetdeva.githubit.api.GithubApiService
 import com.chetdeva.githubit.data.GithubRepository
 import com.chetdeva.githubit.data.InMemoryByPageKeyRepository
 import com.chetdeva.githubit.ui.ViewModelFactory
@@ -20,11 +21,17 @@ object Injection {
     private val NETWORK_IO = Executors.newFixedThreadPool(5)
 
     /**
-     * Creates an instance of [GithubRepository] based on the [GithubApi] and a
-     * [GithubLocalCache]
+     * Creates an instance of [GithubRepository] based on the [GithubApiService]
      */
     private fun provideGithubRepository(): GithubRepository {
-        return InMemoryByPageKeyRepository(GithubApi.create(), NETWORK_IO)
+        return InMemoryByPageKeyRepository(provideGithubApiService(), NETWORK_IO)
+    }
+
+    /**
+     * Creates an instance of [GithubApiService] based on the [GithubApi]
+     */
+    private fun provideGithubApiService(): GithubApiService {
+        return GithubApiService(GithubApi.create())
     }
 
     /**
