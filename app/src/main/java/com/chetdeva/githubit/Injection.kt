@@ -23,7 +23,7 @@ object Injection {
      * Creates an instance of [GithubRepository] based on the [GithubApi] and a
      * [GithubLocalCache]
      */
-    private fun provideGithubRepository(context: Context): GithubRepository {
+    private fun provideGithubRepository(): GithubRepository {
         return InMemoryByPageKeyRepository(GithubApi.create(), NETWORK_IO)
     }
 
@@ -31,7 +31,7 @@ object Injection {
      * Provides the [ViewModelProvider.Factory] that is then used to get a reference to
      * [ViewModel] objects.
      */
-    fun provideViewModelFactory(context: Context): ViewModelProvider.Factory {
-        return ViewModelFactory(provideGithubRepository(context))
+    fun provideViewModelFactory(): ViewModelProvider.Factory {
+        return ViewModelFactory(provideGithubRepository())
     }
 }

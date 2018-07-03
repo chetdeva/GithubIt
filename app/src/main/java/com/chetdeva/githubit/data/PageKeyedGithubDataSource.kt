@@ -7,112 +7,124 @@ import com.chetdeva.githubit.api.Item
 import com.chetdeva.githubit.api.UsersSearchResponse
 import retrofit2.Call
 import retrofit2.Response
+import retrofit2.Callback
+import java.io.IOException
 import java.util.concurrent.Executor
 
 /**
- * A data source that uses the before/after keys returned in page requests.
- * <p>
- * See ItemKeyedSubredditDataSource
+ *
  */
 class PageKeyedGithubDataSource(
         private val githubApi: GithubApi,
         private val searchQuery: String,
-        private val retryExecutor: Executor) : PageKeyedDataSource<String, Item>() {
+        private val retryExecutor: Executor
+) : PageKeyedDataSource<Int, Item>() {
 
-    private val firstPage = 1
-    // keep a function reference for the retry event
-    private var retry: (() -> Any)? = null
+    var retry: (() -> Any)? = null
+    val network = MutableLiveData<NetworkState>()
+    val initial = MutableLiveData<NetworkState>()
+
+    override fun loadBefore(params: LoadParams<Int>,
+                            callback: LoadCallback<Int, Item>) {
+        // ignored, since we only ever append to our initial load
+    }
 
     /**
-     * There is no sync on the state because paging will always call loadInitial first then wait
-     * for it to return some success value before calling loadAfter.
+     * load initial
      */
-    val networkState = MutableLiveData<NetworkState>()
+    override fun loadInitial(params: LoadInitialParams<Int>,
+                             callback: LoadInitialCallback<Int, Item>) {
 
-    val initialLoad = MutableLiveData<NetworkState>()
+        val currentPage = 1
+        val nextPage = computeNextPage(currentPage)
+
+        val request = githubApi.searchUsers(searchQuery, currentPage, params.requestedLoadSize)
+
+        makeLoadInitialRequest(params, callback, request, nextPage)
+    }
+
+    private fun makeLoadInitialRequest(params: LoadInitialParams<Int>,
+                                       callback: LoadInitialCallback<Int, Item>,
+                                       request: Call<UsersSearchResponse>,
+                                       nextPage: Int) {
+
+        postInitialState(NetworkState.LOADING)
+
+        // triggered by a refresh, we better execute sync
+        try {
+            val response = request.execute()
+            val items = response.body()?.items ?: emptyList()
+            retry = null
+            postInitialState(NetworkState.LOADED)
+            callback.onResult(items, null, nextPage)
+        } catch (exception: IOException) {
+            retry = { loadInitial(params, callback) }
+            postInitialState(NetworkState.error(exception.message ?: "unknown error"))
+        }
+    }
+
+    /**
+     * load after
+     */
+    override fun loadAfter(params: LoadParams<Int>,
+                           callback: LoadCallback<Int, Item>) {
+
+        val currentPage = params.key
+        val nextPage = computeNextPage(params.key)
+
+        val request = githubApi.searchUsers(searchQuery, currentPage, params.requestedLoadSize)
+
+        makeLoadAfterRequest(params, callback, request, nextPage)
+    }
+
+    private fun makeLoadAfterRequest(params: LoadParams<Int>,
+                                     callback: LoadCallback<Int, Item>,
+                                     request: Call<UsersSearchResponse>,
+                                     nextPage: Int) {
+
+        postAfterState(NetworkState.LOADING)
+
+        request.enqueue(object : Callback<UsersSearchResponse> {
+
+            override fun onFailure(call: Call<UsersSearchResponse>, t: Throwable) {
+                retry = { loadAfter(params, callback) }
+                postAfterState(NetworkState.error(t.message ?: "unknown err"))
+            }
+
+            override fun onResponse(
+                    call: Call<UsersSearchResponse>,
+                    response: Response<UsersSearchResponse>) {
+                if (response.isSuccessful) {
+                    val items = response.body()?.items!!
+                    retry = null
+                    callback.onResult(items, nextPage)
+                    postAfterState(NetworkState.LOADED)
+                } else {
+                    retry = { loadAfter(params, callback) }
+                    postAfterState(NetworkState.error("error code: ${response.code()}"))
+                }
+            }
+        })
+    }
 
     fun retryAllFailed() {
         val prevRetry = retry
         retry = null
-        prevRetry?.let {
-            retryExecutor.execute {
-                it.invoke()
-            }
+        prevRetry?.let { retry ->
+            retryExecutor.execute { retry() }
         }
     }
 
-    override fun loadBefore(
-            params: LoadParams<String>,
-            callback: LoadCallback<String, Item>) {
-        // ignored, since we only ever append to our initial load
+    private fun postInitialState(state: NetworkState) {
+        network.postValue(state)
+        initial.postValue(state)
     }
 
-    override fun loadAfter(params: LoadParams<String>, callback: LoadCallback<String, Item>) {
-        networkState.postValue(NetworkState.LOADING)
-        githubApi.searchUsers(query = searchQuery,
-                page = params.key,
-                itemsPerPage = params.requestedLoadSize).enqueue(
-                object : retrofit2.Callback<UsersSearchResponse> {
-                    override fun onFailure(call: Call<UsersSearchResponse>, t: Throwable) {
-                        retry = {
-                            loadAfter(params, callback)
-                        }
-                        networkState.postValue(NetworkState.error(t.message ?: "unknown err"))
-                    }
-
-                    override fun onResponse(
-                            call: Call<UsersSearchResponse>,
-                            response: Response<UsersSearchResponse>) {
-                        if (response.isSuccessful) {
-                            val items = response.body()?.items!!
-                            retry = null
-                            callback.onResult(items, params.key)
-                            networkState.postValue(NetworkState.LOADED)
-                        } else {
-                            retry = {
-                                loadAfter(params, callback)
-                            }
-                            networkState.postValue(
-                                    NetworkState.error("error code: ${response.code()}"))
-                        }
-                    }
-                }
-        )
+    private fun postAfterState(state: NetworkState) {
+        network.postValue(state)
     }
 
-    override fun loadInitial(
-            params: LoadInitialParams<String>,
-            callback: LoadInitialCallback<String, Item>) {
-
-        networkState.postValue(NetworkState.LOADING)
-        githubApi.searchUsers(query = searchQuery,
-                page = firstPage.toString(),
-                itemsPerPage = params.requestedLoadSize).enqueue(
-                object : retrofit2.Callback<UsersSearchResponse> {
-                    override fun onFailure(call: Call<UsersSearchResponse>, t: Throwable) {
-                        retry = {
-                            loadInitial(params, callback)
-                        }
-                        networkState.postValue(NetworkState.error(t.message ?: "unknown err"))
-                    }
-
-                    override fun onResponse(
-                            call: Call<UsersSearchResponse>,
-                            response: Response<UsersSearchResponse>) {
-                        if (response.isSuccessful) {
-                            val items = response.body()?.items!!
-                            retry = null
-                            callback.onResult(items, firstPage.toString(), (firstPage + 1).toString())
-                            networkState.postValue(NetworkState.LOADED)
-                        } else {
-                            retry = {
-                                loadInitial(params, callback)
-                            }
-                            networkState.postValue(
-                                    NetworkState.error("error code: ${response.code()}"))
-                        }
-                    }
-                }
-        )
+    private fun computeNextPage(page: Int): Int {
+        return page + 1
     }
 }

@@ -19,7 +19,7 @@ class SearchRepositoriesActivity : AppCompatActivity() {
 
     companion object {
         const val KEY_GITHUB_USER = "github_user"
-        const val DEFAULT_USER = "Jake Wharton"
+        const val DEFAULT_USER = "google"
     }
 
     private lateinit var input: EditText
@@ -36,17 +36,19 @@ class SearchRepositoriesActivity : AppCompatActivity() {
         initAdapter()
         initSwipeToRefresh()
         initSearch()
-        val subreddit = savedInstanceState?.getString(KEY_GITHUB_USER) ?: DEFAULT_USER
-        model.showSearchResults(subreddit)
+        val searchQuery = savedInstanceState?.getString(KEY_GITHUB_USER) ?: DEFAULT_USER
+        model.showSearchResults(searchQuery)
     }
 
     private fun getViewModel(): SearchUsersViewModel {
-        val viewModelFactory = Injection.provideViewModelFactory(this)
+        val viewModelFactory = Injection.provideViewModelFactory()
         return ViewModelProviders.of(this, viewModelFactory)[SearchUsersViewModel::class.java]
     }
 
     private fun initAdapter() {
-        val adapter = UsersAdapter()
+        val adapter = UsersAdapter {
+            model.retry()
+        }
         list.adapter = adapter
         model.posts.observe(this, Observer<PagedList<Item>> {
             adapter.submitList(it)
@@ -73,7 +75,7 @@ class SearchRepositoriesActivity : AppCompatActivity() {
     private fun initSearch() {
         input.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_GO) {
-                updatedSubredditFromInput()
+                updatedFromInput()
                 true
             } else {
                 false
@@ -81,7 +83,7 @@ class SearchRepositoriesActivity : AppCompatActivity() {
         }
         input.setOnKeyListener { _, keyCode, event ->
             if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
-                updatedSubredditFromInput()
+                updatedFromInput()
                 true
             } else {
                 false
@@ -89,7 +91,7 @@ class SearchRepositoriesActivity : AppCompatActivity() {
         }
     }
 
-    private fun updatedSubredditFromInput() {
+    private fun updatedFromInput() {
         input.text.trim().toString().let {
             if (it.isNotEmpty()) {
                 if (model.showSearchResults(it)) {

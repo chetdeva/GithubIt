@@ -14,11 +14,14 @@ import java.util.concurrent.Executor
 class GithubDataSourceFactory(
         private val githubApi: GithubApi,
         private val searchQuery: String,
-        private val retryExecutor: Executor) : DataSource.Factory<String, Item>() {
-    val sourceLiveData = MutableLiveData<PageKeyedGithubDataSource>()
-    override fun create(): DataSource<String, Item> {
+        private val retryExecutor: Executor
+) : DataSource.Factory<Int, Item>() {
+
+    val source = MutableLiveData<PageKeyedGithubDataSource>()
+
+    override fun create(): DataSource<Int, Item> {
         val source = PageKeyedGithubDataSource(githubApi, searchQuery, retryExecutor)
-        sourceLiveData.postValue(source)
+        this.source.postValue(source)
         return source
     }
 }

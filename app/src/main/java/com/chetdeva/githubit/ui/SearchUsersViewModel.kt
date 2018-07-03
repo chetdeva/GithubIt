@@ -9,11 +9,13 @@ import com.chetdeva.githubit.data.GithubRepository
 /**
  * A RecyclerView ViewHolder that displays a single reddit post.
  */
-class SearchUsersViewModel(private val repository: GithubRepository) : ViewModel() {
+class SearchUsersViewModel(
+        private val repository: GithubRepository
+) : ViewModel() {
 
     private val searchQuery = MutableLiveData<String>()
     private val repoResult = map(searchQuery) {
-        repository.searchUsers(it, 10)
+        repository.searchUsers(it, PAGE_SIZE)
     }
     val posts = switchMap(repoResult) { it.pagedList }!!
     val networkState = switchMap(repoResult) { it.networkState }!!
@@ -37,4 +39,8 @@ class SearchUsersViewModel(private val repository: GithubRepository) : ViewModel
     }
 
     fun currentSearchQuery(): String? = searchQuery.value
+
+    companion object {
+        const val PAGE_SIZE: Int = 3
+    }
 }

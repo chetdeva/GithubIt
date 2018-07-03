@@ -18,7 +18,7 @@ interface GithubApi {
      */
     @GET("search/users?sort=followers")
     fun searchUsers(@Query("q") query: String,
-                    @Query("page") page: String,
+                    @Query("page") page: Int,
                     @Query("per_page") itemsPerPage: Int): Call<UsersSearchResponse>
 
 
@@ -27,7 +27,7 @@ interface GithubApi {
 
         fun create(): GithubApi {
             val logger = HttpLoggingInterceptor()
-            logger.level = Level.BASIC
+            logger.level = Level.BODY
 
             val client = OkHttpClient.Builder()
                     .addInterceptor(logger)
