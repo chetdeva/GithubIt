@@ -1,6 +1,6 @@
 # GithubIt
 
-A simple app that uses `PageKeyedDataSource` from Android Paging Library
+A simple app that uses `PageKeyedDataSource` from Android Paging Library. It uses the [Github API](https://developer.github.com/v3/search/#search-users) for searching users.
 
 <img src="./README_images/paging_with_network_screenshot.gif" width="300" height="534"/>
 
