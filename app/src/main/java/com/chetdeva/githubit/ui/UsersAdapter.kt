@@ -10,7 +10,7 @@ import com.chetdeva.githubit.data.NetworkState
 import com.chetdeva.githubit.util.GlideRequests
 
 /**
- * Adapter for the list of repositories.
+ * Adapter for the list of users.
  */
 class UsersAdapter(
         private val glideRequests: GlideRequests,

@@ -20,11 +20,11 @@ class UserItemViewHolder(view: View,
 
     private val title: TextView = view.findViewById(R.id.title)
     private val thumbnail: ImageView = view.findViewById(R.id.thumbnail)
-    private var post: Item? = null
+    private var item: Item? = null
 
     init {
         view.setOnClickListener {
-            post?.url?.let { url ->
+            item?.htmlUrl?.let { url ->
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
                 view.context.startActivity(intent)
             }
@@ -32,7 +32,7 @@ class UserItemViewHolder(view: View,
     }
 
     fun bind(item: Item?) {
-        this.post = item
+        this.item = item
         title.text = item?.login ?: "loading"
 
         if (item?.avatarUrl?.startsWith("http") == true) {
