@@ -17,7 +17,7 @@ import com.chetdeva.githubit.util.GlideApp
 import kotlinx.android.synthetic.main.activity_search_repositories.*
 
 
-class SearchRepositoriesActivity : AppCompatActivity() {
+class SearchUsersActivity : AppCompatActivity() {
 
     companion object {
         const val KEY_GITHUB_USER = "github_user"
@@ -122,5 +122,10 @@ class SearchRepositoriesActivity : AppCompatActivity() {
             R.id.action_search -> true
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    override fun onDestroy() {
+        onQueryTextListener = null
+        super.onDestroy()
     }
 }
