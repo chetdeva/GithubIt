@@ -4,7 +4,9 @@ A simple app that uses `PageKeyedDataSource` from Android Paging Library
 
 <img src="./README_images/paging_with_network_screenshot.gif" width="300" height="534"/>
 
-### How to use PageKeyedDataSource:
+### PageKeyedDataSource
+
+Use `GithubPageKeyedDataSource` to `loadInitial` and `loadAfter`.
 
 ```kotlin
 /**
@@ -44,7 +46,9 @@ class GithubPageKeyedDataSource : PageKeyedDataSource<Int, Item>() {
 }
 ```
 
-### Create a GithubDataSourceFactory
+### DataSource.Factory
+
+Create a `GithubDataSourceFactory`.
 
 ```kotlin
 class GithubDataSourceFactory(
@@ -63,7 +67,9 @@ class GithubDataSourceFactory(
 }
 ```
 
-### Hook it up with your repository
+### Repository
+
+Hook it up with your `InMemoryByPageKeyRepository`.
 
 ```kotlin
 class InMemoryByPageKeyRepository(
@@ -104,7 +110,9 @@ class InMemoryByPageKeyRepository(
 }
 ```
 
-### Call `searchUsers` from the `ViewModel`:
+### ViewModel
+
+Call `searchUsers` from the `SearchUsersViewModel`:
 
 ```kotlin
 class SearchUsersViewModel(
