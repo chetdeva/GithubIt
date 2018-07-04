@@ -11,15 +11,15 @@ class SearchUsersViewModel(
 ) : ViewModel() {
 
     private val searchQuery = MutableLiveData<String>()
-    private val repoResult = map(searchQuery) {
+    private val itemResult = map(searchQuery) {
         repository.searchUsers(it, PAGE_SIZE)
     }
-    val items = switchMap(repoResult) { it.pagedList }!!
-    val networkState = switchMap(repoResult) { it.networkState }!!
-    val refreshState = switchMap(repoResult) { it.refreshState }!!
+    val items = switchMap(itemResult) { it.pagedList }!!
+    val networkState = switchMap(itemResult) { it.networkState }!!
+    val refreshState = switchMap(itemResult) { it.refreshState }!!
 
     fun refresh() {
-        repoResult.value?.refresh?.invoke()
+        itemResult.value?.refresh?.invoke()
     }
 
     fun showSearchResults(searchQuery: String): Boolean {
@@ -31,7 +31,7 @@ class SearchUsersViewModel(
     }
 
     fun retry() {
-        val listing = repoResult?.value
+        val listing = itemResult?.value
         listing?.retry?.invoke()
     }
 
