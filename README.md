@@ -25,7 +25,8 @@ class GithubPageKeyedDataSource : PageKeyedDataSource<Int, Item>() {
                 page = currentPage,
                 perPage = params.requestedLoadSize)
 
-        // Retrofit Call onResponse
+        // Retrofit Call onResponse omitted
+        
         callback.onResult(items, null, nextPage)
     }
 
@@ -40,7 +41,8 @@ class GithubPageKeyedDataSource : PageKeyedDataSource<Int, Item>() {
                 page = currentPage,
                 perPage = params.requestedLoadSize)
 
-        // Retrofit Call onResponse
+        // Retrofit Call onResponse omitted
+        
         callback.onResult(items, nextPage)
     }
 }
